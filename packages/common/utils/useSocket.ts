@@ -47,12 +47,12 @@ export const useSocket = (serverUrl: string = 'http://localhost:5000') => {
     }, [socket]);
 
     // Send packet
-    const sendPacket = useCallback((type: string, data?: any) => {
+    const sendPacket = useCallback((type: string, ...args: any[]) => {
         if (socket && isConnected) {
             const packet: BasePacket = {
                 type,
                 timestamp: new Date().toISOString(),
-                data
+                data: args.length === 1 ? args[0] : args  
             };
             socket.emit('packet', packet);
         }

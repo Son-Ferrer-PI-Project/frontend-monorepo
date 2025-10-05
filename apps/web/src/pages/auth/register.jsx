@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { generateUserKey } from '@repo/connection/utils/userRegistration'
+import { generateUserKey, decryptMessage } from '@repo/connection/utils/userRegistration'
 import { Button } from '@repo/components/button'
+import { useSocket } from '@repo/common/utils/useSocket.ts'
 
 const FirstStep = ({ onNext }) => (
   <div>
@@ -25,9 +26,38 @@ const FirstStep = ({ onNext }) => (
 const SecondStep = ({ onNext, onBack }) => {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
+  const { isConnected, packets, sendPacket } = useSocket();
+  const [registrationInitiated, setRegistrationInitiated] = useState(false);
+  const [PrivKey, setPrivKey] = useState(false);
+  const [isEncryptionFinished, setEncryptionFInished] = useState(false);
+  const [decryptedmessage, setDecryptedMessage] = useState(false);
   useEffect(() => {
     setLoading(false);
   }, []);
+
+  useEffect(() => {
+    if (!registrationInitiated || packets.length === 0) {
+      return;
+    }
+    var check = false;
+    if (decryptedmessage != null && check) {
+        sendPacket('challenge_solution', 2, decryptedmessage)
+        check = false
+    }
+    const latestPacket = packets[packets.length - 1]
+    
+    if (latestPacket.type == 'challenge') {
+        console.log(latestPacket.data);
+        setDecryptedMessage(decryptMessage(PrivKey, latestPacket.data.challenge));
+        check = true;
+        console.log(decryptedmessage);
+    } 
+    if (latestPacket.type == 'chall_response') { 
+        console.log(latestPacket.data)
+        // TODO: Session 
+    } 
+  }, [packets.length, registrationInitiated, onNext]);
 
   const setProtectedUsername = (unsafeUsername) => {
     // only allow a-z A-Z 0-9 _ - .
@@ -55,6 +85,25 @@ const SecondStep = ({ onNext, onBack }) => {
       window.localStorage.setItem(`upk`, btoa(JSON.stringify(keys)));
 
       // TODO: Send data to server.
+
+      // I got you bro 
+      // ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+      // ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⠻⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+      // ⣿⣿⣿⣿⣿⣿⡿⠟⠉⠀⠀⠀⠀⠀⠀⠀⠙⠻⢿⣿⣿⣿⣿⣿⣿⣧⡀⠀⠀⠀⠉⠛⠻⣿⣿⡿⠛⠁⠀⠀⠹⣿⣿⣿⣿
+      // ⣿⣿⣿⣿⠿⠛⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣦⣄⣀⠀⠀⠀⠈⠛⠃⠀⠀⠀⠀⠰⣿⣿⣿⣿
+      // ⣿⣿⣿⣿⠿⢶⠀⠀⠀⠀⣀⣀⣠⣴⣶⡿⠶⠤⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿
+      // ⣿⣿⣿⠏⠀⠀⠀⠀⠀⠀⠀⢉⠉⠁⠀⠀⠀⡀⠀⠀⠀⢹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣼⣿
+      // ⣿⣿⣿⠿⠟⠀⠀⠀⠀⠀⠀⠈⠙⢯⡭⠭⠝⠋⠀⠀⠀⢈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄⠀⠀⠀⠀⠀⠀⠀⠀⠈⢻⣿
+      // ⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡄⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄⡀⠀⠀⠀⠀⠀⠀⠈⣿
+      // ⣿⣿⣿⡇⣠⠴⢶⠶⠦⠤⠤⣄⣀⣀⣀⣀⣠⠴⠉⠀⢀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡀⠀⠀⠀⠀⠀⠀⣿
+      // ⣿⣿⣿⣿⣧⣄⢸⡧⠤⢤⠤⠤⠤⢀⣹⠟⢁⣠⣨⣧⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣇⠀⠀⠀⠀⢀⣼⣿
+      // ⣿⣿⣿⣿⣿⡙⠶⣦⣤⣤⡦⠶⣚⣋⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⣸⣿⣿
+      // ⣿⣿⣿⣿⣿⣿⣿⣶⣶⣶⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⠁⠀⢠⣾⣿⣿⣿
+      // ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+
+      sendPacket('Start_Auth', 1, username, publicKey)
+      setPrivKey(privateKey)
+      setRegistrationInitiated(true);
     }
   }
 
