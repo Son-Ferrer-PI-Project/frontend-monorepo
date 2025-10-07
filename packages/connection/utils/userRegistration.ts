@@ -13,7 +13,7 @@ export async function generateUserKey(username: string) {
 }
 
 
-export async function decryptMessage(privateKeyArmored: any, encryptedMessageArmored: any) {
+export async function decryptMessage(privateKeyArmored: any, encryptedMessageArmored: any, sendPacket: Function)  {
     try {
 
         const [privateKey] = await openpgp.readPrivateKeys({ armoredKeys: privateKeyArmored });;
@@ -27,13 +27,13 @@ export async function decryptMessage(privateKeyArmored: any, encryptedMessageArm
             armoredMessage: encryptedMessageArmored 
         });
 
-        const { data: decrypted } = await openpgp.decrypt({
+        const d = await openpgp.decrypt({
             message: encryptedMessage,
             decryptionKeys: privateKey,
-        });
-
-        return decrypted;
-
+        }).then(({ data: decrypted }) => {
+              sendPacket('challenge_solution', 2, decrypted);
+        }); 
+        return d;
     } catch (error) {
         console.error('Decryption failed:', error);
         throw error;

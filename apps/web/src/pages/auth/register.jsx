@@ -32,6 +32,7 @@ const SecondStep = ({ onNext, onBack }) => {
   const [PrivKey, setPrivKey] = useState(false);
   const [isEncryptionFinished, setEncryptionFInished] = useState(false);
   const [decryptedmessage, setDecryptedMessage] = useState(false);
+  const [check, setcheck] = useState(false);
   useEffect(() => {
     setLoading(false);
   }, []);
@@ -40,18 +41,16 @@ const SecondStep = ({ onNext, onBack }) => {
     if (!registrationInitiated || packets.length === 0) {
       return;
     }
-    var check = false;
-    if (decryptedmessage != null && check) {
-        sendPacket('challenge_solution', 2, decryptedmessage)
-        check = false
-    }
+
     const latestPacket = packets[packets.length - 1]
     
     if (latestPacket.type == 'challenge') {
         console.log(latestPacket.data);
-        setDecryptedMessage(decryptMessage(PrivKey, latestPacket.data.challenge));
-        check = true;
-        console.log(decryptedmessage);
+        var dcrypt = decryptMessage(PrivKey, latestPacket.data.challenge, sendPacket) 
+        console.log(dcrypt);
+        setDecryptedMessage(dcrypt);
+        console.log("Message decrypted");
+        setcheck(true);
     } 
     if (latestPacket.type == 'chall_response') { 
         console.log(latestPacket.data)
@@ -87,6 +86,9 @@ const SecondStep = ({ onNext, onBack }) => {
       // TODO: Send data to server.
 
       // I got you bro 
+      sendPacket('Start_Auth', 1, username, publicKey)
+      setPrivKey(privateKey)
+      setRegistrationInitiated(true);
       // ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
       // ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⠻⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
       // ⣿⣿⣿⣿⣿⣿⡿⠟⠉⠀⠀⠀⠀⠀⠀⠀⠙⠻⢿⣿⣿⣿⣿⣿⣿⣧⡀⠀⠀⠀⠉⠛⠻⣿⣿⡿⠛⠁⠀⠀⠹⣿⣿⣿⣿
